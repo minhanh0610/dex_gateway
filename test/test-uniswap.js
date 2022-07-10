@@ -18,10 +18,10 @@ contract("TestUniswap", (accounts) => {
     const WBNB = "0x418D75f65a02b3D53B2418FB8E1fe493759c7605";
 
   const WHALE = DAI_WHALE;
-  const AMOUNT_IN = 100000;
+  const AMOUNT_IN = 1000000;
   const AMOUNT_OUT_MIN = 1;
-  const TOKEN_IN = BUSD;
-  const TOKEN_OUT = DAI;
+  const TOKEN_IN = DAI;
+  const TOKEN_OUT = BUSD;
   //const TOKEN_OUT = WBNB;
   const TO = accounts[0];
   console.log(TO);
@@ -30,73 +30,85 @@ let testUniswap;
 let tokenIn;
 let tokenOut;
 
-beforeEach(async () => {
-  tokenIn = await IERC20.at(TOKEN_IN);
-  tokenOut = await IERC20.at(TOKEN_OUT);
-  testUniswap = await TestUniswap.new();
+// beforeEach(async () => {
+//   tokenIn = await IERC20.at(TOKEN_IN);
+//   tokenOut = await IERC20.at(TOKEN_OUT);
+//   testUniswap = await TestUniswap.new();
 
-  //console.log({testUniswap});
+//   //console.log({testUniswap});
 
-  // make sure WHALE has enough ETH to send tx
-  // await sendEther(web3, accounts[0], WHALE, 1);
-  // var accounts = await web3.eth.getAccounts();
-  // console.log({accounts});
-  await tokenIn.approve(testUniswap.address, AMOUNT_IN, { from: WHALE });
-});
-
-
-
-it("swap token to token", async () => {
-  console.log(`out ${await tokenOut.balanceOf(TO)}`);
-  console.log(`out ${await tokenIn.balanceOf(TO)}`);
+//   // make sure WHALE has enough ETH to send tx
+//   // await sendEther(web3, accounts[0], WHALE, 1);
+//   // var accounts = await web3.eth.getAccounts();
+//   // console.log({accounts});
+//   await tokenIn.approve(testUniswap.address, AMOUNT_IN, { from: TO });
+// });
 
 
-  let amountOutIn = await testUniswap.getAmountOutMin(
-    tokenIn.address,
-    tokenOut.address,
-    AMOUNT_IN
-  );
-  console.log({AMOUNT_IN});
-  console.log(amountOutIn.toNumber());
-  let AMOUNT_OUT_MIN = amountOutIn.toNumber();
-  //AMOUNT_OUT_MIN = amountOutIn;
 
-  await testUniswap.swap(
-    tokenIn.address,
-    tokenOut.address,
-    AMOUNT_IN,
-    AMOUNT_OUT_MIN,
-    TO,
-    {
-      from: WHALE,
-    }
-  );
+// it("swap token to token", async () => {
+//   console.log(`out ${await tokenOut.balanceOf(TO)}`);
+//   console.log(`out ${await tokenIn.balanceOf(TO)}`);
 
-  console.log(`in ${AMOUNT_IN}`);
-  console.log(`out ${await tokenOut.balanceOf(TO)}`);
 
-});
+//   let amountOutIn = await testUniswap.getAmountOutMin(
+//     tokenIn.address,
+//     tokenOut.address,
+//     AMOUNT_IN
+//   );
+//   console.log({AMOUNT_IN});
+//   console.log(amountOutIn.toNumber());
+//   let AMOUNT_OUT_MIN = amountOutIn.toNumber();
+//   //AMOUNT_OUT_MIN = amountOutIn;
 
-let eth_token = DAI
-it("eth to token",async()=>{
-  eth_token = await IERC20.at(eth_token); 
-  let testUniswap = await TestUniswap.new();
- await testUniswap.swapFromETHToToken(eth_token.address,AMOUNT_OUT_MIN,TO,{value:AMOUNT_IN, FROM:ETH_WHALE});
- //await testUniswap.swapFromETHToToken(tokenOut.address,AMOUNT_OUT_MIN,TO);
- console.log(`in ${AMOUNT_IN}`, WHALE);
-  console.log(`out ${await tokenOut.balanceOf(TO)}`);
-});
+//   await testUniswap.swap(
+//     tokenIn.address,
+//     tokenOut.address,
+//     AMOUNT_IN,
+//     AMOUNT_OUT_MIN,
+//     TO,
+//     {
+//       from: TO,
+//     }
+//   );
+
+//   console.log(`in ${AMOUNT_IN}`);
+//   console.log(`out ${await tokenOut.balanceOf(TO)}`);
+//   console.log(`in ${await tokenIn.balanceOf(TO)}`);
+
+// });
+
+// let eth_token = DAI
+// it("eth to token",async()=>{
+//   eth_token = await IERC20.at(eth_token); 
+//   console.log(`out ${await tokenOut.balanceOf(TO)}`);
+//   let testUniswap = await TestUniswap.new();
+//  await testUniswap.swapFromETHToToken(eth_token.address,AMOUNT_OUT_MIN,TO,{value:AMOUNT_IN, FROM:TO});
+//  //await testUniswap.swapFromETHToToken(tokenOut.address,AMOUNT_OUT_MIN,TO);
+//  console.log(`in ${AMOUNT_IN}`, WHALE);
+//   console.log(`out ${await tokenOut.balanceOf(TO)}`);
+//   //console.log(TO.balanceOf());
+// });
 
 let token_eth = DAI
-it("swap token eth",async()=>{
+it("token to eth",async()=>{
+  token_eth = await IERC20.at(token_eth);
+  testUniswap = await TestUniswap.new();
+  console.log(`in ${await token_eth.balanceOf(TO)}`,AMOUNT_IN);
+  await token_eth.approve(testUniswap.address, AMOUNT_IN, { from: TO });
 
-  token_eth = await IERC20.at(token_eth); 
-  console.log(`out ${await eth_token.balanceOf(TO)}`);
+   await testUniswap.swapFromTokenToETH(
+    token_eth.address,
+     AMOUNT_IN,
+     AMOUNT_OUT_MIN,
+     TO,
+     {
+      from: TO,
+     }
+   );
 
-  let testUniswap = await TestUniswap.new();
- await testUniswap.swapFromTokenToETH(token_eth.address,AMOUNT_OUT_MIN,TO,{value:AMOUNT_IN, FROM:TO});
- //await testUniswap.swapFromETHToToken(tokenOut.address,AMOUNT_OUT_MIN,TO);
- console.log(`in ${AMOUNT_IN}`);
-  console.log(`out ${await token_eth.balanceOf(TO)}`);
-});
+   console.log(`out ${await token_eth.balanceOf(TO)}`);
+ })
+ 
+
 });
