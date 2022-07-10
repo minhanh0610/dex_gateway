@@ -10,7 +10,7 @@ contract("TestUniswap", (accounts) => {
     const WBTC = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"
     const BUSD = "0x4Fabb145d64652a948d72533023f6E7A623C7C53"
     const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-    const ETH = "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
+    const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 
     const BNB = "0xB8c77482e45F1F44dE1745F52C74426C631bDD52";
     const WBNB = "0x418D75f65a02b3D53B2418FB8E1fe493759c7605";
@@ -19,7 +19,7 @@ contract("TestUniswap", (accounts) => {
   const AMOUNT_IN = 100000;
   const AMOUNT_OUT_MIN = 1;
   const TOKEN_IN = DAI;
-  const TOKEN_OUT = WBTC;
+  const TOKEN_OUT = BUSD;
   //const TOKEN_OUT = WBNB;
   const TO = accounts[0];
   console.log(TO);
@@ -27,54 +27,33 @@ contract("TestUniswap", (accounts) => {
 let testUniswap;
 let tokenIn;
 let tokenOut;
+let usdc;
 
 beforeEach(async () => {
   tokenIn = await IERC20.at(TOKEN_IN);
   tokenOut = await IERC20.at(TOKEN_OUT);
+
+  usdc = await IERC20.at(USDC);
+
+
   testUniswap = await TestUniswap.new();
 
   //console.log({testUniswap});
   
 
-  // make sure WHALE has enough ETH to send tx
-  // await sendEther(web3, accounts[0], WHALE, 1);
-  // var accounts = await web3.eth.getAccounts();
-  // console.log({accounts});
-  await tokenIn.approve(testUniswap.address, AMOUNT_IN, { from: WHALE });
-});
+  //await tokenIn.approve(testUniswap.address, AMOUNT_IN, { from: WHALE });
 
+});
 it("should pass", async () => {
-  console.log(`out ${await tokenOut.balanceOf(TO)}`);
-  console.log(`out ${await tokenIn.balanceOf(TO)}`);
+    console.log(`out ${await tokenOut.balanceOf(TO)}`);
+   const ethAmount = 1000;
+    await testUniswap.swapTokenforEth(
+        tokenOut.address,
+        ethAmount
+    )
 
-
-  let amountOutIn = await testUniswap.getAmountOutMin(
-    tokenIn.address,
-    tokenOut.address,
-    AMOUNT_IN
-  );
-  console.log({AMOUNT_IN});
-  console.log({amountOutIn});
-  //AMOUNT_OUT_MIN = amountOutIn;
-
-  await testUniswap.swap(
-    tokenIn.address,
-    tokenOut.address,
-    AMOUNT_IN,
-    //AMOUNT_OUT_MIN,
-    //amountOutIn,
-    TO,
-    {
-      from: WHALE,
-    }
-  );
-
-
-  console.log(`in ${AMOUNT_IN}`);
-
-  console.log(`out ${await tokenOut.balanceOf(TO)}`);
-    
-  web3.eth.getBalance(TO)
-.then(console.log);
+    console.log(`out ${await tokenOut.balanceOf(TO)}`);
+  });
 });
-});
+
+

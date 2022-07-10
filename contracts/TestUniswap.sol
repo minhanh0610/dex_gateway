@@ -4,11 +4,37 @@ pragma solidity >=0.4.22 <0.9.0;
 import "./interfaces/IERC20.sol";
 import "./interfaces/Uniswap.sol";
 
+
 contract TestUniswap {
   
     address private constant UNISWAP_V2_ROUTER =
       0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
   address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+  
+  function swapEthforToken(address token, uint ethAmount) external payable{
+    uint deadline = block.timestamp + 150;
+
+    address[] memory path = new address[](2);
+        path[0] = WETH;
+        path[1] = token;
+
+    uint amountOutMin = IUniswapV2Router(UNISWAP_V2_ROUTER).getAmountsOut(ethAmount, path)[1];
+    IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactETHForTokens{value: msg.value}(amountOutMin, path, msg.sender, deadline);
+  }
+
+  function swapTokenforEth(address token, uint tokenAmount) external payable{
+    uint deadline = block.timestamp + 150;
+    address[] memory path = new address[](2);
+        path[0] = token;
+        path[1] = WETH;
+
+    uint amountOutMin = IUniswapV2Router(UNISWAP_V2_ROUTER).getAmountsOut(tokenAmount, path)[1];
+        IERC20(token).transferFrom(msg.sender, address(this), tokenAmount);
+        IERC20(token).approve(UNISWAP_V2_ROUTER, tokenAmount);
+        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForETH(tokenAmount, amountOutMin, path, msg.sender, deadline);
+    
+  }
+
 
   function swap(
     address _tokenIn,
@@ -37,7 +63,7 @@ contract TestUniswap {
 
     uint _amountOutMin = amountOutMins[path.length - 1];
 
-    
+
 
     IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
       _amountIn,
