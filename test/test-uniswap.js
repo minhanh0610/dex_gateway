@@ -1,5 +1,7 @@
 
 const BN = require("bn.js");
+//var BN = web3.utils.BN;
+
 
 const IERC20 = artifacts.require("IERC20"); // artifacts is created in build/contracts
 const TestUniswap = artifacts.require("TestUniswap");
@@ -13,101 +15,164 @@ contract("TestUniswap", (accounts) => {
     const BUSD = "0x4Fabb145d64652a948d72533023f6E7A623C7C53"
     const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
     const ETH = "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
+    const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+    const USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 
     const BNB = "0xB8c77482e45F1F44dE1745F52C74426C631bDD52";
     const WBNB = "0x418D75f65a02b3D53B2418FB8E1fe493759c7605";
 
   const WHALE = DAI_WHALE;
-  const AMOUNT_IN = 10;
-  const AMOUNT_OUT_MIN = 1;
-  const TOKEN_IN = DAI;
-  const TOKEN_OUT = BUSD;
-  //const TOKEN_OUT = WBNB;
+
   const TO = accounts[0];
-  console.log(TO);
+  console.log(`account ${TO}`);
 
 let testUniswap;
 let tokenIn;
 let tokenOut;
+let tokenIn_decimals;
+let tokenOut_decimals;
 
-// beforeEach(async () => {
-//   tokenIn = await IERC20.at(TOKEN_IN);
-//   tokenOut = await IERC20.at(TOKEN_OUT);
-//   testUniswap = await TestUniswap.new();
+//swap 2 token 
+const TOKEN_IN = USDC;
+const TOKEN_OUT = USDT;
+const AMOUNT_IN = 1;
 
-//   //console.log({testUniswap});
+beforeEach(async () => {
+  tokenIn = await IERC20.at(TOKEN_IN);
+  tokenOut = await IERC20.at(TOKEN_OUT);
+  testUniswap = await TestUniswap.new();
 
-//   // make sure WHALE has enough ETH to send tx
-//   // await sendEther(web3, accounts[0], WHALE, 1);
-//   // var accounts = await web3.eth.getAccounts();
-//   // console.log({accounts});
-//   await tokenIn.approve(testUniswap.address, AMOUNT_IN, { from: TO });
-// });
+    //decimal of token
+  let decimals = await tokenIn.decimals();
+  tokenIn_decimals = decimals.toNumber();
+  console.log(tokenIn_decimals);
+  decimals = await tokenOut.decimals();
+  tokenOut_decimals = decimals.toNumber();
+  console.log(tokenOut_decimals);
 
+  let _amountIn = AMOUNT_IN;
+  //convert amountIn toWei
+  let amountIn = web3.utils.toWei(web3.utils.toBN(_amountIn * Math.pow(10, tokenIn_decimals)), 'wei');
 
-
-// it("swap token to token", async () => {
-//   console.log(`out ${await tokenOut.balanceOf(TO)}`);
-//   console.log(`out ${await tokenIn.balanceOf(TO)}`);
-
-
-//   let amountOutIn = await testUniswap.getAmountOutMin(
-//     tokenIn.address,
-//     tokenOut.address,
-//     AMOUNT_IN
-//   );
-//   console.log({AMOUNT_IN});
-//   console.log(amountOutIn.toNumber());
-//   let AMOUNT_OUT_MIN = amountOutIn.toNumber();
-//   //AMOUNT_OUT_MIN = amountOutIn;
-
-//   await testUniswap.swap(
-//     tokenIn.address,
-//     tokenOut.address,
-//     AMOUNT_IN,
-//     AMOUNT_OUT_MIN,
-//     TO,
-//     {
-//       from: TO,
-//     }
-//   );
-
-//   console.log(`in ${AMOUNT_IN}`);
-//   console.log(`out ${await tokenOut.balanceOf(TO)}`);
-//   console.log(`in ${await tokenIn.balanceOf(TO)}`);
-
-// });
-
-let eth_token = DAI
-it("eth to token",async()=>{
-  eth_token = await IERC20.at(eth_token); 
-  console.log(`out ${await eth_token.balanceOf(TO)}`);
-  let testUniswap = await TestUniswap.new();
- await testUniswap.swapFromETHToToken(eth_token.address,AMOUNT_OUT_MIN,TO,{value:AMOUNT_IN, FROM:TO});
- //await testUniswap.swapFromETHToToken(tokenOut.address,AMOUNT_OUT_MIN,TO);
- console.log(`in ${AMOUNT_IN}`, WHALE);
-  console.log(`out ${await eth_token.balanceOf(TO)}`);
-  //console.log(TO.balanceOf());
+  // var amountIn = web3.utils.toWei(
+  //   web3.utils.toBN(_amountIn), // converts Number to BN, which is accepted by `toWei()`
+  //   'ether'
+  // );
+  await tokenIn.approve(testUniswap.address, amountIn, { from: TO });
 });
+
+
+it("swap token to token", async () => {
+  console.log(`before swap : token in ${await tokenIn.balanceOf(TO)}   ${await tokenIn.balanceOf(TO) / Math.pow(10, tokenIn_decimals)}`);
+  console.log(`before swap : token out ${await tokenOut.balanceOf(TO)}    ${await tokenOut.balanceOf(TO) / Math.pow(10, tokenOut_decimals)}`);
+  
+  let _amountIn = AMOUNT_IN;
+  //convert amountIn toWei
+  let amountIn = web3.utils.toWei(web3.utils.toBN(_amountIn * Math.pow(10, tokenIn_decimals)), 'wei');
+  // var amountIn = web3.utils.toWei(
+  //     web3.utils.toBN(_amountIn), // converts Number to BN, which is accepted by `toWei()`
+  //     'ether'
+  //   );
+
+  let amountOutIn = await testUniswap.getAmountOutMin(
+    tokenIn.address,
+    tokenOut.address,
+    amountIn
+  );
+  console.log(amountIn.toString());
+  console.log(amountOutIn.toString());
+  // let AMOUNT_OUT_MIN = amountOutIn.toNumber();
+  //AMOUNT_OUT_MIN = amountOutIn;
+
+  //swap
+  await testUniswap.swap(
+    tokenIn.address,
+    tokenOut.address,
+    amountIn,
+    TO,
+    {
+      from: TO,
+    }
+  );
+
+  console.log(`after swap(wei)  : token in ${await tokenIn.balanceOf(TO)}   ${await tokenIn.balanceOf(TO) / Math.pow(10, tokenIn_decimals)}`);
+  //console.log(`after swap(token): token in ${await tokenIn.balanceOf(TO) / Math.pow(10, tokenIn_decimals)}`);
+  console.log(`after swap(wei)  : token out ${await tokenOut.balanceOf(TO)}   ${await tokenOut.balanceOf(TO) / Math.pow(10, tokenOut_decimals)}`);
+ //console.log(`after swap(token): token out ${await tokenIn.balanceOf(TO) / Math.pow(10, tokenOut_decimals)}`);
+
+});
+
+
+// it("eth to token",async()=>{
+//   let eth_token =DAI
+//   eth_token = await IERC20.at(eth_token); 
+//   let testUniswap = await TestUniswap.new();
+
+//   //decimal of token 
+//   let decimals = await eth_token.decimals();
+//   let token_decimals = decimals.toNumber();
+//   console.log(`decimal of token ${decimals.toNumber()}`);
+
+//   console.log(`before swap (wei) ${await eth_token.balanceOf(TO)}`);
+//   console.log(`before swap (token) ${await eth_token.balanceOf(TO) / Math.pow(10, token_decimals)}`);
+  
+//   //amountIn
+//   let _amountIn = 200;
+//   //convert amountIn toWei
+//   var amountIn = web3.utils.toWei(
+//     web3.utils.toBN(_amountIn), // converts Number to BN, which is accepted by `toWei()`
+//     'ether'
+//     );
+
+//   //swap
+//  await testUniswap.swapFromETHToToken(
+//     eth_token.address,  
+//     amountIn,
+//     {value:amountIn, FROM:TO}
+//   );
+ 
+//   console.log(`after swap (wei) ${await eth_token.balanceOf(TO)}`);
+//   console.log(`after swap (token) ${await eth_token.balanceOf(TO) / Math.pow(10, token_decimals)}`);
+// });
+
 
 // let token_eth = DAI
 // it("token to eth",async()=>{
+//   let token_eth = DAI
 //   token_eth = await IERC20.at(token_eth);
 //   testUniswap = await TestUniswap.new();
-//   console.log(`in ${await token_eth.balanceOf(TO)}`,AMOUNT_IN);
-//   await token_eth.approve(testUniswap.address, AMOUNT_IN, { from: TO });
 
+//   //decimal of token
+//   let decimals = await token_eth.decimals();
+//   let token_decimals = decimals.toNumber();
+//   console.log(`decimal of token ${decimals.toNumber()}`);
+
+//   console.log(`before swap (wei) ${await token_eth.balanceOf(TO)}`);
+//   console.log(`before swap (token) ${await token_eth.balanceOf(TO) / Math.pow(10, token_decimals)}`);
+
+//   //amountIn
+//   let _amountIn = 1000;
+//   //convert amountIn toWei
+//     var amountIn = web3.utils.toWei(
+//       web3.utils.toBN(_amountIn), // converts Number to BN, which is accepted by `toWei()`
+//       'ether'
+//     );
+  
+//   //approve
+//   await token_eth.approve(testUniswap.address, amountIn, { from: TO });
+
+//   //swap
 //    await testUniswap.swapFromTokenToETH(
-//     token_eth.address,
-//      AMOUNT_IN,
-//      AMOUNT_OUT_MIN,
-//      TO,
-//      {
-//       from: TO,
-//      }
+//       token_eth.address,
+//       amountIn,
+//       {
+//         from: TO,
+//       }
 //    );
+ 
+//   console.log(`after swap (wei) ${await token_eth.balanceOf(TO)}`);
+//   console.log(`after swap (token) ${await token_eth.balanceOf(TO) / Math.pow(10, token_decimals)}`);
 
-//    console.log(`out ${await token_eth.balanceOf(TO)}`);
 //  })
  
 
