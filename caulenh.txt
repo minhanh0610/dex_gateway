@@ -1,0 +1,8 @@
+ganache-cli --fork https://mainnet.infura.io/v3/$WEB3_INFURA_PROJECT_ID \
+--networkId 999
+
+
+npx truffle migrate --network mainnet_fork
+
+
+npx truffle test --network mainnet_fork test/test-uniswap.js
